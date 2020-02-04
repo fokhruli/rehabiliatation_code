@@ -14,7 +14,7 @@ from sklearn.decomposition import PCA
 #path = ["./Segmented_Movements/Kinect/Positions/","./Incorrect_Segmented_Movements/Kinect/Positions/"]
 
 ## read all file for m08
-def get_path():
+def get_path(k):
     correct_movement_location = []
     #label1 = [1]*100
     for i in range(10):
@@ -43,20 +43,18 @@ def get_path():
                 incorrect_movement_location.append("./Incorrect_Segmented_Movements/Kinect/Positions/"+"m08_s0{}_e0{}_positions_inc.txt".format(i+1, j+1))
                 
     correct_movement_location.extend(incorrect_movement_location)
-    p = random.randint(0,200)
-    files = open(correct_movement_location[p])
+    files = open(correct_movement_location[i])
     lines = files.readlines()
-    if p<=100:
-        label = 0
-    else:
+    if k<=100:
         label = 1
-    if len(lines)>=50:
-        return lines, label
     else:
-        preprocess()
+        label = 0
+    return lines, label
 
-def preprocess():
-    lines, label = get_path()
+#df, label = get_path(i)
+
+def preprocess(i):
+    lines, label = get_path(i)
     for i, line in enumerate(lines):
         lines[i] = line.split(',')
     for i in range(len(lines)):
@@ -101,10 +99,11 @@ def preprocess():
     #df['label'] = pd.DataFrame(np.zeros((len(lines),1)))
     return df, label
 
+#df, label = preprocess(i)
 
-def feature_extruction():
+def feature_extruction(i):
 
-    df, label = preprocess()
+    df, label = preprocess(i)
     ###################### make ja_t(hp_r, sh_r, eb_r) ##########################
     ## 2*1 col features
     pt_hp_r_sh_r = df[['x19', 'y19', 'z19']].to_numpy() - df[['x12', 'y12', 'z12']].to_numpy()
@@ -175,7 +174,27 @@ def feature_extruction():
     features = np.append(features,npt_t_sh_r_wr_r, axis=1)
     features = np.append(features,npt_t_sh_l_wr_l, axis=1)
     #features = np.append(npt_t_hd_wr_r,npt_t_hd_wr_l, axis=1)
-    return features.flatten(), label
+    if label==1:
+        label = np.ones((len(pt_t_hd_wr_r), 1))
+    elif label==0:
+        label = np.zeros((len(pt_t_hd_wr_r), 1))
+    data = np.append(features, label, axis=1)
+    return data
+
+def load_data():
+    for i in range(200):
+        temp = feature_extruction(i)
+        if i == 0:
+            dataframe = temp
+        else:
+            dataframe = np.append(dataframe,temp, axis=0)
+    col = []
+#col_full = defaultdict()
+    for i in range(19):
+        col.append("x{}".format(i))
+    dataframe = pd.DataFrame(data = dataframe, columns = col)
+    return dataframe
+
+#d = load_data()
 
 
-#feature_extruction()
