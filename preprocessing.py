@@ -4,6 +4,7 @@ import numpy as np
 from collections import defaultdict
 import random
 from sklearn.decomposition import PCA
+import scipy.stats as stats
 
 
 #file = open('./Segmented_Movements/Kinect/Positions/m08_s01_e01_positions.txt')
@@ -195,6 +196,57 @@ def load_data():
     dataframe = pd.DataFrame(data = dataframe, columns = col)
     return dataframe
 
-#d = load_data()
+d = load_data()
+
+Fs = 10
+frame_size = Fs*2 # 20
+hop_size = Fs*1 # 10
 
 
+
+def get_frames(frame_size, hop_size):
+    df = load_data()
+    N_FEATURES = 18
+
+    frames = []
+    labels = []
+    for i in range(0, len(df) - frame_size, hop_size):
+        x0 = df['x0'].values[i: i + frame_size]
+        x1 = df['x1'].values[i: i + frame_size]
+        x2 = df['x2'].values[i: i + frame_size]
+        x3 = df['x3'].values[i: i + frame_size]
+        x4 = df['x4'].values[i: i + frame_size]
+        x5 = df['x5'].values[i: i + frame_size]
+        x6 = df['x6'].values[i: i + frame_size]
+        x7 = df['x7'].values[i: i + frame_size]
+        x8 = df['x8'].values[i: i + frame_size]
+        x9 = df['x9'].values[i: i + frame_size]
+        x10 = df['x10'].values[i: i + frame_size]
+        x11 = df['x11'].values[i: i + frame_size]
+        x12 = df['x12'].values[i: i + frame_size]
+        x13 = df['x13'].values[i: i + frame_size]
+        x14 = df['x14'].values[i: i + frame_size]
+        x15 = df['x15'].values[i: i + frame_size]
+        x16 = df['x16'].values[i: i + frame_size]
+        x17 = df['x17'].values[i: i + frame_size]
+        #y = df['y'].values[i: i + frame_size]
+        #z = df['z'].values[i: i + frame_size]
+        
+        # Retrieve the most often used label in this segment
+        label = stats.mode(df['x18'][i: i + frame_size])[0][0]
+        frames.append([x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16,x17])
+        labels.append(label)
+
+    # Bring the segments into a better shape
+    frames = np.asarray(frames).reshape(-1, frame_size, N_FEATURES)
+    labels = np.asarray(labels)
+
+    return frames, labels
+def get_data():
+    X,y =get_frames(frame_size, hop_size)
+    X_ = [0]*len(X)
+    for i in range(len(X)):
+        X_[i] = X[i].flatten()
+    return np.array(X_), y
+    
+#X_iii, y = get_data()
