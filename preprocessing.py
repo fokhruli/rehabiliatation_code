@@ -14,45 +14,42 @@ import scipy.stats as stats
 
 #path = ["./Segmented_Movements/Kinect/Positions/","./Incorrect_Segmented_Movements/Kinect/Positions/"]
 
-## read all file for m08
-def get_path(k):
-    correct_movement_location = []
-    #label1 = [1]*100
-    for i in range(10):
-        for j in range(10):
-            if i>=9 and j<9:
-                correct_movement_location.append("./Segmented_Movements/Kinect/Positions/"+"m08_s{}_e0{}_positions.txt".format(i+1, j+1))
-            elif i<9 and j>=9:
-                correct_movement_location.append("./Segmented_Movements/Kinect/Positions/"+"m08_s0{}_e{}_positions.txt".format(i+1, j+1))
-            elif i>=9 and j>=9:
-                correct_movement_location.append("./Segmented_Movements/Kinect/Positions/"+"m08_s{}_e{}_positions.txt".format(i+1, j+1))
-            else:
-                correct_movement_location.append("./Segmented_Movements/Kinect/Positions/"+"m08_s0{}_e0{}_positions.txt".format(i+1, j+1))
+#read all file for correct movement
+correct_movement_location = []
+for i in range(10):
+    for j in range(10):
+        if i>=9 and j<9:
+            correct_movement_location.append("./Segmented Movements/Kinect/Positions/"+"m08_s{}_e0{}_positions.txt".format(i+1, j+1))
+        elif i<9 and j>=9:
+            correct_movement_location.append("./Segmented Movements/Kinect/Positions/"+"m08_s0{}_e{}_positions.txt".format(i+1, j+1))
+        elif i>=9 and j>=9:
+            correct_movement_location.append("./Segmented Movements/Kinect/Positions/"+"m08_s{}_e{}_positions.txt".format(i+1, j+1))
+        else:
+            correct_movement_location.append("./Segmented Movements/Kinect/Positions/"+"m08_s0{}_e0{}_positions.txt".format(i+1, j+1))
         
-    
-    incorrect_movement_location = []
-    #label2 = [0]*100
-    for i in range(10):
-        for j in range(10):
-            if i>=9 and j<9:
-                incorrect_movement_location.append("./Incorrect_Segmented_Movements/Kinect/Positions/"+"m08_s{}_e0{}_positions_inc.txt".format(i+1, j+1))
-            elif i<9 and j>=9:
-                incorrect_movement_location.append("./Incorrect_Segmented_Movements/Kinect/Positions/"+"m08_s0{}_e{}_positions_inc.txt".format(i+1, j+1))
-            elif i>=9 and j>=9:
-                incorrect_movement_location.append("./Incorrect_Segmented_Movements/Kinect/Positions/"+"m08_s{}_e{}_positions_inc.txt".format(i+1, j+1))
-            else:
-                incorrect_movement_location.append("./Incorrect_Segmented_Movements/Kinect/Positions/"+"m08_s0{}_e0{}_positions_inc.txt".format(i+1, j+1))
+#read all file for incorrect movement   
+incorrect_movement_location = []
+for i in range(10):
+    for j in range(10):
+        if i>=9 and j<9:
+            incorrect_movement_location.append("./Incorrect Segmented Movements/Kinect/Positions/"+"m08_s{}_e0{}_positions_inc.txt".format(i+1, j+1))
+        elif i<9 and j>=9:
+            incorrect_movement_location.append("./Incorrect Segmented Movements/Kinect/Positions/"+"m08_s0{}_e{}_positions_inc.txt".format(i+1, j+1))
+        elif i>=9 and j>=9:
+            incorrect_movement_location.append("./Incorrect Segmented Movements/Kinect/Positions/"+"m08_s{}_e{}_positions_inc.txt".format(i+1, j+1))
+        else:
+            incorrect_movement_location.append("./Incorrect Segmented Movements/Kinect/Positions/"+"m08_s0{}_e0{}_positions_inc.txt".format(i+1, j+1))
                 
-    correct_movement_location.extend(incorrect_movement_location)
+correct_movement_location.extend(incorrect_movement_location)
+
+def get_path(i):
     files = open(correct_movement_location[i])
     lines = files.readlines()
-    if k<=100:
+    if i<=100:
         label = 1
     else:
         label = 0
     return lines, label
-
-#df, label = get_path(i)
 
 def preprocess(i):
     lines, label = get_path(i)
@@ -72,35 +69,16 @@ def preprocess(i):
     rom = [6, 10, 14, 9, 13, 12, 8, 19, 15]
     #rom_full = ['hd', 'wr_l', 'wr_r', 'eb_l', 'eb_r', 'sh_r', 'sh_l', 'hp_r', 'hp_l']
     
-
-    '''
-    data = []
-    data = np.array(data)
-    for i, r in enumerate(rom):
-        
-        data.append(lines[:,3*r-3])
-        data.append(lines[:,3*r-2])
-        data.append(lines[:,3*r-1])
-        '''
     col = []
     #col_full = defaultdict()
     for i,r in enumerate(rom):
         col.append("x{}".format(r))
         col.append("y{}".format(r))
         col.append("z{}".format(r))
-        
-        
-        #col_full[rf+"_x"] = "x{}".format(r)
-        #col_full[rf+"_y"] = "y{}".format(r)
-        #col_full[rf+"_z"] = "z{}".format(r)
-        
     
     df = df1[col]
-    # make a condition 
-    #df['label'] = pd.DataFrame(np.zeros((len(lines),1)))
     return df, label
 
-#df, label = preprocess(i)
 
 def feature_extruction(i):
 
@@ -118,8 +96,8 @@ def feature_extruction(i):
     
     
     for i in range(len(pt_hp_r_sh_r)):
-        ja_t_hp_r_sh_r_eb_r.append(np.arccos(np.dot(pt_hp_r_sh_r[i], pt_sh_r_eb_r[i])/(sum(abs(pt_hp_r_sh_r[i]))*sum(abs(pt_sh_r_eb_r[i])))))
-        ja_t_hp_l_sh_l_eb_l.append(np.arccos(np.dot(pt_hp_l_sh_l[i], pt_sh_l_eb_l[i])/(sum(abs(pt_hp_l_sh_l[i]))*sum(abs(pt_sh_l_eb_l[i])))))
+        ja_t_hp_r_sh_r_eb_r.append(np.arccos((np.dot(pt_hp_r_sh_r[i], pt_sh_r_eb_r[i]))/(np.sqrt(np.dot(pt_hp_r_sh_r[i],pt_hp_r_sh_r[i]))*np.sqrt(np.dot(pt_sh_r_eb_r[i],pt_sh_r_eb_r[i])))))
+        ja_t_hp_l_sh_l_eb_l.append(np.arccos((np.dot(pt_hp_l_sh_l[i], pt_sh_l_eb_l[i]))/(np.sqrt(np.dot(pt_hp_l_sh_l[i],pt_hp_l_sh_l[i]))*np.sqrt(np.dot(pt_sh_l_eb_l[i],pt_sh_l_eb_l[i])))))
     
     ja_t_hp_r_sh_r_eb_r = np.array(ja_t_hp_r_sh_r_eb_r).reshape((len(ja_t_hp_r_sh_r_eb_r),1))
     ja_t_hp_l_sh_l_eb_l = np.array(ja_t_hp_l_sh_l_eb_l).reshape((len(ja_t_hp_r_sh_r_eb_r),1))
@@ -156,24 +134,11 @@ def feature_extruction(i):
     pt_t_sh_r_wr_r = abs(df[['x12', 'y12', 'z12']].to_numpy() - df[['x14', 'y14', 'z14']].to_numpy())
     pt_t_sh_l_wr_l = abs(df[['x8', 'y8', 'z8']].to_numpy() - df[['x10', 'y10', 'z10']].to_numpy())
     
+    features = np.append(features,pt_t_hd_wr_r, axis=1)
+    features = np.append(features,pt_t_hd_wr_l, axis=1)
+    features = np.append(features,pt_t_sh_r_wr_r, axis=1)
+    features = np.append(features,pt_t_sh_l_wr_l, axis=1)
     
-    # devided by zero may occour because there have chance any sensor data is getting zero
-    # so we take only differences not doing normalize
-    
-    #npt_t_hd_wr_r = abs(pt_t_hd_wr_r - pt_t_hd_wr_r[0])/pt_t_hd_wr_r[0]
-    #npt_t_hd_wr_l = abs(pt_t_hd_wr_l - pt_t_hd_wr_l[0])/pt_t_hd_wr_l[0]
-    #npt_t_sh_r_wr_r = abs(pt_t_sh_r_wr_r - pt_t_sh_r_wr_r[0])/pt_t_sh_r_wr_r[0]
-    #npt_t_sh_l_wr_l = abs(pt_t_sh_l_wr_l - pt_t_sh_l_wr_l[0])/pt_t_sh_l_wr_l[0]
-    
-    npt_t_hd_wr_r = abs(pt_t_hd_wr_r - pt_t_hd_wr_r[0])
-    npt_t_hd_wr_l = abs(pt_t_hd_wr_l - pt_t_hd_wr_l[0])
-    npt_t_sh_r_wr_r = abs(pt_t_sh_r_wr_r - pt_t_sh_r_wr_r[0])
-    npt_t_sh_l_wr_l = abs(pt_t_sh_l_wr_l - pt_t_sh_l_wr_l[0]) 
-    
-    features = np.append(features,npt_t_hd_wr_r, axis=1)
-    features = np.append(features,npt_t_hd_wr_l, axis=1)
-    features = np.append(features,npt_t_sh_r_wr_r, axis=1)
-    features = np.append(features,npt_t_sh_l_wr_l, axis=1)
     #features = np.append(npt_t_hd_wr_r,npt_t_hd_wr_l, axis=1)
     if label==1:
         label = np.ones((len(pt_t_hd_wr_r), 1))
@@ -190,21 +155,14 @@ def load_data():
         else:
             dataframe = np.append(dataframe,temp, axis=0)
     col = []
-#col_full = defaultdict()
     for i in range(19):
         col.append("x{}".format(i))
     dataframe = pd.DataFrame(data = dataframe, columns = col)
     return dataframe
 
-d = load_data()
+#d = load_data()
 
-Fs = 10
-frame_size = Fs*2 # 20
-hop_size = Fs*1 # 10
-
-
-
-def get_frames(frame_size, hop_size):
+def get_frames(frame_size, hop_size):  #get features of frame_size=20 frames 
     df = load_data()
     N_FEATURES = 18
 
@@ -234,19 +192,26 @@ def get_frames(frame_size, hop_size):
         
         # Retrieve the most often used label in this segment
         label = stats.mode(df['x18'][i: i + frame_size])[0][0]
-        frames.append([x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16,x17])
-        labels.append(label)
+        frames.append([x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16,x17]) #contain feature of 20 frames
+        labels.append(label) 
 
     # Bring the segments into a better shape
-    frames = np.asarray(frames).reshape(-1, frame_size, N_FEATURES)
-    labels = np.asarray(labels)
+    #frames_ = np.asarray(frames).reshape(-1, frame_size, N_FEATURES)
+    frames = np.asarray(frames).reshape(len(frames),-1)
+    labels = np.array(labels)
+    labels = np.reshape(labels, (-1,1))
+    #labels = np.asarray(labels)
 
     return frames, labels
-def get_data():
+"""def get_data():
     X,y =get_frames(frame_size, hop_size)
     X_ = [0]*len(X)
     for i in range(len(X)):
         X_[i] = X[i].flatten()
     return np.array(X_), y
-    
-#X_iii, y = get_data()
+"""    
+#X, y = get_data()
+#Fs = 10
+#frame_size = Fs*2 # 20
+#hop_size = Fs*1 # 10
+#X, y = get_frames(frame_size, hop_size)
