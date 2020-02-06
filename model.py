@@ -65,6 +65,14 @@ classifier.summary()
 # Fitting the ANN to the Training set
 history = classifier.fit(X_train, y_train, epochs = 500, validation_split=0.2)
 
+#Saving the architecture (topology) of the network
+classifier_json = classifier.to_json()
+with open("classifier.json", "w") as json_file:
+    json_file.write(classifier_json)
+
+#Saving network weights
+classifier.save_weights("classifier_weights.h5")
+
 # summarize history for loss
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
@@ -96,3 +104,26 @@ for i in range(y_pred.shape[0]):
 cm = confusion_matrix(y_test, y_pred)
 accuracy = (cm[0,0]+cm[1,1])/(cm[0,1]+cm[1,0]+cm[0,0]+cm[1,1])
 print("Accuracy is: ",accuracy)
+
+#threshold model for scoring
+y_pred = classifier.predict(X_test)
+for i in range(y_pred.shape[0]):
+    if y_pred[i,0] >= 0.33 and y_pred[i,0] <= 0.66:
+        y_pred[i,0] = 1
+    elif y_pred[i,0] > 0.66:
+        y_pred[i,0] = 2
+    else:
+        y_pred[i,0] = 0
+
+y_pred_list = []
+for i in range(y_pred.shape[0]):
+    y_pred_list.append(y_pred[i,0])
+
+#plot the histogram    
+plt.hist(y_pred,bins=150)
+
+#load the model
+with open('classifier.json', 'r') as f:
+    classifier_json = f.read()
+
+classifier = tf.keras.models.model_from_json(classifier_json)
