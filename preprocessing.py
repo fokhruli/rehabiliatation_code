@@ -7,13 +7,6 @@ from sklearn.decomposition import PCA
 import scipy.stats as stats
 
 
-#file = open('./Segmented_Movements/Kinect/Positions/m08_s01_e01_positions.txt')
-
-#lines = file.readlines()
-
-
-#path = ["./Segmented_Movements/Kinect/Positions/","./Incorrect_Segmented_Movements/Kinect/Positions/"]
-
 #read all file for correct movement
 correct_movement_location = []
 for i in range(10):
@@ -57,8 +50,7 @@ def preprocess(i):
         lines[i] = line.split(',')
     for i in range(len(lines)):
         lines[i] = [ float(x) for x in  lines[i]]
-        
-    #lines = np.array(lines)
+
     columns = []
     
     for i in range(22):
@@ -67,10 +59,8 @@ def preprocess(i):
         columns.append("z{}".format(i+1))
     df1 = pd.DataFrame(data = lines, columns = columns)
     rom = [6, 10, 14, 9, 13, 12, 8, 19, 15]
-    #rom_full = ['hd', 'wr_l', 'wr_r', 'eb_l', 'eb_r', 'sh_r', 'sh_l', 'hp_r', 'hp_l']
     
     col = []
-    #col_full = defaultdict()
     for i,r in enumerate(rom):
         col.append("x{}".format(r))
         col.append("y{}".format(r))
@@ -138,8 +128,7 @@ def feature_extruction(i):
     features = np.append(features,pt_t_hd_wr_l, axis=1)
     features = np.append(features,pt_t_sh_r_wr_r, axis=1)
     features = np.append(features,pt_t_sh_l_wr_l, axis=1)
-    
-    #features = np.append(npt_t_hd_wr_r,npt_t_hd_wr_l, axis=1)
+
     if label==1:
         label = np.ones((len(pt_t_hd_wr_r), 1))
     elif label==0:
@@ -187,29 +176,19 @@ def get_frames(frame_size, hop_size):  #get features of frame_size=20 frames
         x15 = df['x15'].values[i: i + frame_size]
         x16 = df['x16'].values[i: i + frame_size]
         x17 = df['x17'].values[i: i + frame_size]
-        #y = df['y'].values[i: i + frame_size]
-        #z = df['z'].values[i: i + frame_size]
         
         # Retrieve the most often used label in this segment
         label = stats.mode(df['x18'][i: i + frame_size])[0][0]
         frames.append([x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16,x17]) #contain feature of 20 frames
         labels.append(label) 
 
-    # Bring the segments into a better shape
-    #frames_ = np.asarray(frames).reshape(-1, frame_size, N_FEATURES)
     frames = np.asarray(frames).reshape(len(frames),-1)
     labels = np.array(labels)
     labels = np.reshape(labels, (-1,1))
-    #labels = np.asarray(labels)
+
 
     return frames, labels
-"""def get_data():
-    X,y =get_frames(frame_size, hop_size)
-    X_ = [0]*len(X)
-    for i in range(len(X)):
-        X_[i] = X[i].flatten()
-    return np.array(X_), y
-"""    
+
 #X, y = get_data()
 #Fs = 10
 #frame_size = Fs*2 # 20
