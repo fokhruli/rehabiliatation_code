@@ -81,17 +81,17 @@ X_train = X_train_
 train_x, valid_x, train_y, valid_y = train_test_split(X_train, y_train, test_size=0.3)
 
 
-def normalized_adjacency(num_node):
+def normalize_adjacency(num_node):
     """
     Parameters
     ----------
-    num_node : int
+    num_node : Int
         Total number of nodes(joints)
 
     Returns
     -------
-    AD : tensor
-        returns the normalized adjacency matrix
+    AD : Tensor
+        Returns the normalized adjacency matrix
     """
     self_link = [(i, i) for i in range(num_node)]
     neighbor_1base = [(1, 2), (2, 21), (3, 21), (4, 3), (5, 21),
@@ -104,32 +104,59 @@ def normalized_adjacency(num_node):
     A = np.zeros((num_node, num_node)) # adjacency matrix
     for i, j in edge:
         A[j, i] = 1
-        A[i, j] = 1        
-    Dl = np.sum(A, 0)
-    num_node = A.shape[0]
-    Dn = np.zeros((num_node, num_node))  # Degree matrix
-    for i in range(num_node):
-        if Dl[i] > 0:
-            Dn[i, i] = Dl[i]**(-1)
-    AD = np.dot(A, Dn)  # normalized laplacian
-    AD = AD.astype('float32')
-    AD = tf.convert_to_tensor(AD)    
-    return AD
+        A[i, j] = 1
+    
+    A2 = np.zeros((num_node, num_node)) # second order adjacency matrix
+    for root in range(A.shape[1]):
+        for neighbour in range(A.shape[0]):
+            if A[root, neighbour] == 1:
+                for neighbour_of_neigbour in range(A.shape[0]):
+                    if A[neighbour, neighbour_of_neigbour] == 1:
+                        A2[root,neighbour_of_neigbour] = 1
+                        
+    AD = normalize(A)
+    AD2 = normalize(A2)
+    return AD, AD2
+    
+def normalize(adjacency):
+    """
+    Parameters
+    ----------
+    adjacency : Numpy array
+        Adjacency matrix with shape (number of nodes, number of nodes).
 
-AD = normalized_adjacency(num_joints)
+    Returns
+    -------
+    normalize_adjacency : Tensor
+        The normalize adjacency matrix.
+    """
+    rowsum = np.array(adjacency.sum(1))
+    r_inv = np.power(rowsum, -1).flatten()
+    r_inv[np.isinf(r_inv)] = 0
+    r_mat_inv = np.diag(r_inv)
+    normalize_adjacency = r_mat_inv.dot(adjacency)
+    normalize_adjacency = normalize_adjacency.astype('float32')
+    normalize_adjacency = tf.convert_to_tensor(normalize_adjacency)   
+    return normalize_adjacency
+
+AD, AD2 = normalize_adjacency(num_joints)
 
 
 def sgcn(input):
-    x = tf.keras.layers.Conv2D(filters=128, kernel_size=(1,1), strides=1, activation='relu')(input)
-    #x = Dropout(0.25)(x)
-    x = tf.keras.layers.Lambda(lambda x: tf.einsum('vw,ntwc->ntvc', x[0], x[1]))([AD, x])
-   
-    x = tf.keras.layers.Conv2D(filters=64, kernel_size=(1,1), strides=1, activation='relu')(x)
-    #x = Dropout(0.25)(x)
-    x = tf.keras.layers.Lambda(lambda x: tf.einsum('vw,ntwc->ntvc', x[0], x[1]))([AD, x])
+    x = tf.keras.layers.Conv2D(filters=32, kernel_size=(1,1), strides=1, activation='relu')(input)
+    #x = Dropout(0.2)(x)
+    gcn_1 = tf.keras.layers.Lambda(lambda x: tf.einsum('vw,ntwc->ntvc', x[0], x[1]))([AD, x])
+    gcn_2 = tf.keras.layers.Lambda(lambda x: tf.einsum('vw,ntwc->ntvc', x[0], x[1]))([AD2, x])
+    x = concatenate([gcn_1, gcn_2], axis=-1)                                                                                                                                   
     
-    #x = tf.keras.layers.Conv2D(filters=64, kernel_size=(1,1), strides=1, activation='relu')(x)
-    #x = Dropout(0.25)(x)
+    x = tf.keras.layers.Conv2D(filters=128, kernel_size=(1,1), strides=1, activation='relu')(x)
+    #x = Dropout(0.2)(x)
+    gcn_1 = tf.keras.layers.Lambda(lambda x: tf.einsum('vw,ntwc->ntvc', x[0], x[1]))([AD, x])
+    gcn_2 = tf.keras.layers.Lambda(lambda x: tf.einsum('vw,ntwc->ntvc', x[0], x[1]))([AD2, x])
+    x = concatenate([gcn_1, gcn_2], axis=-1)
+    
+    #x = tf.keras.layers.Conv2D(filters=128, kernel_size=(1,1), strides=1, activation='relu')(x)
+    #x = Dropout(0.2)(x)
     #x = tf.keras.layers.Lambda(lambda x: tf.einsum('vw,ntwc->ntvc', x[0], x[1]))([AD, x])
     
     x = tf.keras.layers.Reshape(target_shape=(-1,x.shape[2]*x.shape[3]))(x)
@@ -138,19 +165,19 @@ def sgcn(input):
 input = Input(shape=(None, train_x.shape[2], train_x.shape[3]), batch_size=None)
 x = sgcn(input)
 
-rec = LSTM(120, return_sequences=True)(x)
-rec = Dropout(0.30)(rec)
-rec1 = LSTM(60, return_sequences=True)(rec)
-rec1 = Dropout(0.30)(rec1)
-rec1 = LSTM(60, return_sequences=True)(rec1)
-rec1 = Dropout(0.30)(rec1)
-rec2 = LSTM(40)(rec1)
-rec2 = Dropout(0.30)(rec2)
-out = Dense(1, activation = 'linear')(rec2)
+rec = LSTM(80, return_sequences=True)(x)
+rec = Dropout(0.2)(rec)
+rec1 = LSTM(40, return_sequences=True)(rec)
+rec1 = Dropout(0.2)(rec1)
+rec2 = LSTM(40, return_sequences=True)(rec1)
+rec2 = Dropout(0.2)(rec2)
+rec3 = LSTM(80)(rec2)
+rec3 = Dropout(0.2)(rec3)
+out = Dense(1, activation = 'linear')(rec3)
 
 model = Model(input, out)
-model.compile(loss='mse', optimizer= Adam(lr=0.0001))
-history = model.fit(train_x, train_y, validation_data = (valid_x,valid_y), epochs=100, batch_size=10)
+model.compile(loss='mse', optimizer= tf.keras.optimizers.Adam(lr=0.0001))
+history = model.fit(train_x, train_y, validation_data = (valid_x,valid_y), epochs=200, batch_size=10)
 
 # Plot the results
 plt.figure(1)
@@ -166,6 +193,8 @@ plt.show()
 y_pred = np.zeros((valid_x.shape[0],1))
 for samples in range(valid_x.shape[0]):
     y_pred[samples,0] = model.predict(tf.expand_dims(valid_x[samples,:,:,:],axis=0))
+
+y_pred = model.predict(valid_x)
 
 #garbage_value = tf.random.normal(shape=(1,500,21,4))
 #garbage_prediction = model.predict(garbage_value)
